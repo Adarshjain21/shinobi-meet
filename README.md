@@ -1,6 +1,6 @@
-# Shinobi Meet — Teleportation Jutsu for Google Meet
+# Shinobi Meet - Teleportation Jutsu for Google Meet
 
-Make a ninja hand seal at your webcam during a Google Meet call and vanish in a burst of blue chakra — then reappear about two seconds later. **Everyone in the call sees it**, your camera never turns off, and you never leave the meeting.
+Make a ninja hand seal at your webcam during a Google Meet call and vanish in a burst of blue chakra - then reappear when you make the seal again. **Everyone in the call sees it**, your camera never turns off, and you never leave the meeting.
 
 - Chrome extension only. **No companion app, no OBS, no virtual camera to install or select.**
 - Everything runs locally in your browser. No video, image or landmark data leaves your machine; the extension makes no network requests.
@@ -12,9 +12,9 @@ Make a ninja hand seal at your webcam during a Google Meet call and vanish in a 
 1. Open `chrome://extensions`, switch on **Developer mode** (top right).
 2. Click **Load unpacked** and choose the `extension/` folder of this project.
 3. Open (or **reload**) `https://meet.google.com` and join a call with your camera on.
-   Keep your normal webcam selected — there is nothing to change in Meet's settings.
+   Keep your normal webcam selected - there is nothing to change in Meet's settings.
 4. Click the extension icon. When it shows **Camera processing: Active** and **Gesture detection: Watching for the seal**, you're ready.
-5. Hold the seal (default: index + middle fingers together, pointing up, other fingers folded) steadily in view for about half a second — or press **Test teleportation in Meet** in the popup.
+5. Hold the seal (default: index + middle fingers together, pointing up, other fingers folded) steadily in view for about half a second - or press **Test teleportation in Meet** in the popup.
 
 > A Meet tab that was already open before you installed or reloaded the extension must be reloaded once. If your camera was already on when you enabled the extension, toggle the camera off and on once.
 
@@ -39,8 +39,8 @@ The hard requirement is that **remote participants** see the effect. That rules 
 ```
 
 1. **`inject.js` runs in the page's MAIN world at `document_start`** and wraps `navigator.mediaDevices.getUserMedia`. When Meet asks for the camera it gets a stream whose video track is ours. Meet then sends that track through its own `RTCPeerConnection`, so the effect is in the pixels everyone receives.
-2. **The video path uses WebRTC Insertable Streams.** While nothing is happening, frames are forwarded *untouched* (zero copy — no quality loss and essentially no CPU). Only while the jutsu plays is each frame composited on an `OffscreenCanvas` and re-wrapped as a new `VideoFrame`. Because frames are pulled by the camera and not by `requestAnimationFrame`, it keeps working when the Meet tab is in the background.
-3. **Detection runs in a hidden extension-origin iframe.** MediaPipe needs to load WASM and a JS loader, which Meet's CSP / Trusted Types would block inside the page. The iframe runs under the extension's own CSP and in a separate process. It receives small downscaled frames taken from the *existing* camera stream — a second camera stream is never opened.
+2. **The video path uses WebRTC Insertable Streams.** While nothing is happening, frames are forwarded *untouched* (zero copy - no quality loss and essentially no CPU). Only while the jutsu plays is each frame composited on an `OffscreenCanvas` and re-wrapped as a new `VideoFrame`. Because frames are pulled by the camera and not by `requestAnimationFrame`, it keeps working when the Meet tab is in the background.
+3. **Detection runs in a hidden extension-origin iframe.** MediaPipe needs to load WASM and a JS loader, which Meet's CSP / Trusted Types would block inside the page. The iframe runs under the extension's own CSP and in a separate process. It receives small downscaled frames taken from the *existing* camera stream - a second camera stream is never opened.
 4. **The "empty room"** shown while you are invisible is a background plate learned continuously from the pixels the segmenter marks as not-you. Areas you have never uncovered are inpainted from their surroundings.
 
 ### Approaches evaluated
@@ -51,11 +51,11 @@ The hard requirement is that **remote participants** see the effect. That rules 
 | Isolated-world content script patching `getUserMedia` | ❌ Content scripts have their own JS global; Meet never sees the patch. |
 | **MAIN-world script wrapping `getUserMedia` + Insertable Streams** | ✅ **Chosen.** Meet itself sends the processed track. No install beyond the extension. |
 | `RTCRtpSender.replaceTrack` on Meet's peer connection | ⚠️ Works, but requires hooking `RTCPeerConnection` and guessing which sender is the camera; breaks Meet's own preview/effects. Wrapping at the source is simpler and sturdier. |
-| Offscreen document / service worker in the video path | ❌ A service worker has no DOM/camera and is suspended when idle; an offscreen document can process video but cannot hand a `MediaStreamTrack` to the Meet page (tracks and `VideoFrame`s cannot cross that process boundary — verified, see below). |
+| Offscreen document / service worker in the video path | ❌ A service worker has no DOM/camera and is suspended when idle; an offscreen document can process video but cannot hand a `MediaStreamTrack` to the Meet page (tracks and `VideoFrame`s cannot cross that process boundary - verified, see below). |
 | Companion desktop app with a virtual camera driver | ⚠️ Works with any app, but needs a native driver install (signed on Windows/macOS) and a second program running. Unnecessary for Meet-in-Chrome. |
 | OBS Virtual Camera | ⚠️ Same trade-off: heavy install and manual scene setup for something the browser can do itself. |
 
-**Limitation of the chosen approach:** it only affects Google Meet in Chrome (and Chromium browsers that support MV3 `world: "MAIN"`, Chrome 111+). It does not create a system-wide camera for Zoom/Teams desktop apps — that would need the virtual-camera route.
+**Limitation of the chosen approach:** it only affects Google Meet in Chrome (and Chromium browsers that support MV3 `world: "MAIN"`, Chrome 111+). It does not create a system-wide camera for Zoom/Teams desktop apps - that would need the virtual-camera route.
 
 ---
 
@@ -64,7 +64,7 @@ The hard requirement is that **remote participants** see the effect. That rules 
 - **Enable / disable** toggle.
 - **Status**: Meet tab connection, camera processing, gesture detection (with a live hold-progress bar), companion app (not needed).
 - **Hand seal** selector, **gesture sensitivity**.
-- **Reappear**: *When I make the seal again* (default) — you stay invisible until you release your hand and make the seal a second time (or press **Bring me back** in the popup; there is a 10-minute safety limit). *Automatically after a set time* — reappear after 0.5–10 s.
+- **Reappear**: *When I make the seal again* (default) - you stay invisible until you release your hand and make the seal a second time (or press **Bring me back** in the popup; there is a 10-minute safety limit). *Automatically after a set time* - reappear after 0.5–10 s.
 - **Preview**: plays the real effect code on a drawn scene inside the popup.
 - **Test teleportation in Meet**: fires the jutsu in the call without a gesture.
 
@@ -77,7 +77,7 @@ The toolbar icon shows an `ON` badge on tabs whose camera stream is being proces
 | **Seal of Confrontation** (default) | One hand. Index + middle fingers straight and touching, pointing up. Ring and pinky folded. |
 | **Clone Seal** | Both hands make the same two-finger shape and cross in a “+” (one upright, one sideways). |
 
-The one-hand seal is the default because a single unoccluded hand is what hand tracking follows most reliably. Recognition uses joint angles (total bend per finger from 3D landmarks), finger adjacency and pointing direction — not mere hand presence. The seal must be held (`low` 0.9 s / `medium` 0.55 s / `high` 0.3 s), short tracking dropouts are tolerated, and after firing it will not fire again until the animation is over **and** you have released the pose.
+The one-hand seal is the default because a single unoccluded hand is what hand tracking follows most reliably. Recognition uses joint angles (total bend per finger from 3D landmarks), finger adjacency and pointing direction - not mere hand presence. The seal must be held (`low` 0.9 s / `medium` 0.55 s / `high` 0.3 s), short tracking dropouts are tolerated, and after firing it will not fire again until the animation is over **and** you have released the pose.
 
 ### Adding a new seal
 
@@ -136,7 +136,7 @@ extension/
     handDetection.js        MediaPipe Hand Landmarker + Selfie Segmenter wrappers
     gestureRecognition.js   pure geometry: sign matching + hold/cooldown stabilizer
     signs.js                seal definitions (data)
-  vendor/mediapipe/         @mediapipe/tasks-vision 0.10.21 (Apache-2.0), bundled — MV3 forbids remote code
+  vendor/mediapipe/         @mediapipe/tasks-vision 0.10.21 (Apache-2.0), bundled - MV3 forbids remote code
   models/                   hand_landmarker.task, selfie_segmenter.tflite
   assets/                   icons
 tests/
@@ -152,7 +152,7 @@ Gesture recognition, animation and camera processing are independent: `gesture/`
 ## Testing
 
 ```bash
-npm test                                  # gesture unit tests — no dependencies
+npm test                                  # gesture unit tests - no dependencies
 
 npm install --no-save puppeteer           # once, for the browser test
 node tests/e2e/pipeline.e2e.mjs --headful # add --images <dir> to run real photos through the models
@@ -192,9 +192,9 @@ Please do a quick solo test call (meet.google.com → *New meeting* → *Start a
 | **Waiting for camera** although the camera is on | The camera was started before the extension attached. Toggle the camera off/on in Meet or reload the tab. |
 | Seal is not recognised | Watch the popup: “1 hand in view” means tracking works but the pose doesn't match. Keep the two fingers touching and pointing up, fold ring + pinky fully, palm side or back toward the camera, hand not too close. Try **High** sensitivity. |
 | Triggers by accident | Use **Low** sensitivity, or switch to the two-hand Clone Seal. |
-| The “empty room” has a soft blurry patch where you were | The plate can only show background it has seen. It learns continuously — lean out of frame once and it fills in for real. |
+| The “empty room” has a soft blurry patch where you were | The plate can only show background it has seen. It learns continuously - lean out of frame once and it fills in for real. |
 | Gesture detection **Unavailable** | MediaPipe failed to start (see the tab's console). The test button still works, using a generic silhouette. |
-| Meet's own background blur/effects | Meet applies them to whatever camera track it receives, so they should stack on top of the jutsu — not tested yet. |
+| Meet's own background blur/effects | Meet applies them to whatever camera track it receives, so they should stack on top of the jutsu - not tested yet. |
 
 ## Notes
 
