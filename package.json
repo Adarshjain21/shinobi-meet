@@ -1,0 +1,12 @@
+{
+  "name": "shinobi-meet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Naruto-style teleportation jutsu for Google Meet (Chrome extension)",
+  "scripts": {
+    "test": "node --test tests/gesture.test.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "test:e2e": "node tests/e2e/pipeline.e2e.mjs"
+  }
+}

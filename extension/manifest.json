@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Shinobi Meet — Teleportation Jutsu",
+  "short_name": "Shinobi Meet",
+  "version": "1.0.0",
+  "description": "Perform a ninja hand seal on camera and vanish from your Google Meet call in a burst of blue chakra. Everyone in the call sees it.",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "action": {
+    "default_title": "Shinobi Meet",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png"
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://meet.google.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "js": [
+        "video/canvasUtil.js",
+        "effects/particles.js",
+        "effects/energyEffects.js",
+        "effects/teleportation.js",
+        "video/backgroundPlate.js",
+        "video/videoProcessor.js",
+        "video/streamManager.js",
+        "inject.js"
+      ]
+    },
+    {
+      "matches": ["https://meet.google.com/*"],
+      "run_at": "document_start",
+      "js": ["shared/settings.js", "content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "resources": [
+        "engine/engine.html",
+        "engine/engine.js",
+        "gesture/*",
+        "vendor/mediapipe/*",
+        "vendor/mediapipe/wasm/*",
+        "models/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

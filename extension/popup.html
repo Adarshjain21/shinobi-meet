@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shinobi Meet</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="assets/icon48.png" alt="" width="30" height="30" />
+        <div>
+          <h1>Shinobi Meet</h1>
+          <p>Teleportation Jutsu</p>
+        </div>
+      </div>
+      <label class="switch" title="Enable / disable">
+        <input type="checkbox" id="enabled" />
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </header>
+
+    <section class="preview">
+      <canvas id="preview" width="336" height="189" aria-label="Animation preview"></canvas>
+      <button id="previewBtn" class="ghost" type="button">▶ Preview</button>
+    </section>
+
+    <section class="status" aria-live="polite">
+      <div class="row"><span class="dot" id="dotMeet"></span><span class="label">Google Meet</span><span class="value" id="valMeet">…</span></div>
+      <div class="row"><span class="dot" id="dotCamera"></span><span class="label">Camera processing</span><span class="value" id="valCamera">…</span></div>
+      <div class="row"><span class="dot" id="dotGesture"></span><span class="label">Gesture detection</span><span class="value" id="valGesture">…</span></div>
+      <div class="meter" title="Hold progress of the hand seal"><div id="holdMeter"></div></div>
+      <div class="row"><span class="dot ok"></span><span class="label">Companion app</span><span class="value">Not needed · in-browser</span></div>
+      <p class="hint" id="hint"></p>
+    </section>
+
+    <section class="controls">
+      <label for="sign">Hand seal</label>
+      <select id="sign"></select>
+      <p class="hint" id="signHelp"></p>
+
+      <label for="hold">Invisible for <output id="holdOut">2.0</output> s</label>
+      <input type="range" id="hold" min="0.5" max="10" step="0.5" value="2" />
+
+      <label for="sensitivity">Gesture sensitivity</label>
+      <select id="sensitivity">
+        <option value="low">Low — strict pose, long hold</option>
+        <option value="medium">Medium</option>
+        <option value="high">High — forgiving, quick</option>
+      </select>
+    </section>
+
+    <button id="testBtn" class="primary" type="button">⚡ Test teleportation in Meet</button>
+    <p class="hint center" id="testMsg"></p>
+
+    <script src="shared/settings.js"></script>
+    <script src="video/canvasUtil.js"></script>
+    <script src="effects/particles.js"></script>
+    <script src="effects/energyEffects.js"></script>
+    <script src="effects/teleportation.js"></script>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
