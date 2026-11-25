@@ -8,7 +8,13 @@
 
   const DEFAULTS = Object.freeze({
     enabled: true,
-    /** How long the user stays invisible, in seconds. */
+    /**
+     * How the user comes back:
+     *   'gesture' — stay invisible until the hand seal is made again
+     *   'timer'   — reappear automatically after holdSeconds
+     */
+    returnMode: 'gesture',
+    /** How long the user stays invisible in 'timer' mode, in seconds. */
     holdSeconds: 2,
     /** 'low' | 'medium' | 'high' — see gesture/gestureRecognition.js */
     sensitivity: 'medium',
@@ -25,6 +31,7 @@
     s.holdSeconds = Number.isFinite(hold)
       ? Math.min(LIMITS.holdMax, Math.max(LIMITS.holdMin, hold))
       : DEFAULTS.holdSeconds;
+    if (!['gesture', 'timer'].includes(s.returnMode)) s.returnMode = DEFAULTS.returnMode;
     if (!['low', 'medium', 'high'].includes(s.sensitivity)) s.sensitivity = DEFAULTS.sensitivity;
     if (typeof s.sign !== 'string' || !s.sign) s.sign = DEFAULTS.sign;
     return s;

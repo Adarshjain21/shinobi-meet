@@ -47,8 +47,11 @@ function applySettings(settings) {
   tolerance = preset.tolerance;
   stabilizer.configure({
     holdMs: preset.holdMs,
-    // Never re-fire while the previous teleport is still playing.
-    cooldownMs: (Number(settings.holdSeconds) || 2) * 1000 + 3500,
+    // 'timer' mode: never re-fire while the previous teleport is still playing.
+    // 'gesture' mode: the same seal brings the user back, so only block for
+    // the vanish animation; the stabilizer additionally requires the pose to
+    // be released and made again, so holding it never vanishes-and-returns.
+    cooldownMs: settings.returnMode === 'timer' ? (Number(settings.holdSeconds) || 2) * 1000 + 3500 : 1500,
   });
 }
 

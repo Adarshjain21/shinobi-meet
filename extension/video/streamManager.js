@@ -28,10 +28,18 @@
   const ENGINE_REPLY_TIMEOUT_MS = 2500;
   const ENGINE_RELEASE_DELAY_MS = 15000;
   const STATUS_INTERVAL_MS = 300;
+  // Safety net for 'gesture' return mode: come back by yourself eventually.
+  const MAX_GESTURE_HOLD_MS = 10 * 60 * 1000;
 
   class StreamManager {
     constructor() {
-      this.settings = { enabled: readEnabledCache(), holdSeconds: 2, sensitivity: 'medium', sign: 'confrontation' };
+      this.settings = {
+        enabled: readEnabledCache(),
+        returnMode: 'gesture',
+        holdSeconds: 2,
+        sensitivity: 'medium',
+        sign: 'confrontation',
+      };
       this.pipelines = new Set();
       this._primary = null;
 
@@ -98,6 +106,19 @@
       return false;
     }
 
+    /** Invisible and waiting for the hand seal to bring the user back. */
+    get _awaitingReturn() {
+      if (this.settings.returnMode !== 'gesture') return false;
+      for (const p of this.pipelines) if (p.effect.holding) return true;
+      return false;
+    }
+
+    _bringBack(now) {
+      for (const p of this.pipelines) p.effect.release(now);
+      this._gesture = { hands: 0, matched: false, progress: 0 };
+      this._postStatus(true);
+    }
+
     // --------------------------------------------------------- per frame
 
     _onFrame(pipeline, source, width, height, now) {
@@ -123,7 +144,9 @@
       }
 
       const effectActive = this._effectActive;
-      const wantHands = !effectActive && !this._arming;
+      // Hands are watched while idle, and while invisible in 'gesture' return
+      // mode (the camera still sees the user, only the outgoing video hides them).
+      const wantHands = (!effectActive && !this._arming) || this._awaitingReturn;
       // Masks: constantly while the jutsu plays (they drive the particles),
       // immediately when arming, otherwise ~1/s to keep the plate fresh.
       const wantMask = effectActive || this._arming || now - this._lastMaskAt > IDLE_MASK_INTERVAL_MS;
@@ -258,7 +281,8 @@
       const now = performance.now();
       const effectActive = this._effectActive;
 
-      if (!effectActive && !this._arming) {
+      const awaitingReturn = this._awaitingReturn;
+      if ((!effectActive && !this._arming) || awaitingReturn) {
         this._gesture = { hands: result.hands, matched: result.matched, progress: result.progress };
       }
 
@@ -302,7 +326,10 @@
         if (this._arming) this._fire(now);
       }
 
-      if (result.triggered && !effectActive && !this._arming) this.trigger();
+      if (result.triggered) {
+        if (awaitingReturn) this._bringBack(now);
+        else if (!effectActive && !this._arming) this.trigger();
+      }
     }
 
     /**
@@ -313,8 +340,12 @@
      */
     trigger() {
       if (!this.settings.enabled || this.pipelines.size === 0) return false;
-      if (this._effectActive || this._arming) return true;
       const now = performance.now();
+      if (this._awaitingReturn) {
+        this._bringBack(now); // second press of the test button = come back
+        return true;
+      }
+      if (this._effectActive || this._arming) return true;
       if (this._port && this._engineState === 'ready') {
         this._arming = true;
         this._armDeadline = now + ARM_TIMEOUT_MS;
@@ -332,7 +363,7 @@
       for (const pipeline of this.pipelines) {
         pipeline.effect.start({
           now,
-          holdMs: this.settings.holdSeconds * 1000,
+          holdMs: this.settings.returnMode === 'gesture' ? MAX_GESTURE_HOLD_MS : this.settings.holdSeconds * 1000,
           plate,
           mask: this._maskAlpha ? this._mask : null,
           maskAlpha: this._maskAlpha,
@@ -392,6 +423,10 @@
 
       if (msg.type === 'settings') {
         this.settings = { ...this.settings, ...msg.settings };
+        // Switching to timer mode while invisible must not strand the user.
+        if (this.settings.returnMode !== 'gesture') {
+          for (const p of this.pipelines) if (p.effect.holding) p.effect.release(performance.now());
+        }
         if (!this.settings.enabled) {
           this._arming = false;
           for (const p of this.pipelines) p.effect.stop();
@@ -436,6 +471,7 @@
           engineMessage: this._engineMessage,
           gesture: this._gesture,
           effectActive: this._effectActive || this._arming,
+          awaitingReturn: this._awaitingReturn,
           lastTriggerAt: this._lastTriggerAt,
         },
       });

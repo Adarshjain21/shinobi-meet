@@ -63,7 +63,8 @@ The hard requirement is that **remote participants** see the effect. That rules 
 
 - **Enable / disable** toggle.
 - **Status**: Meet tab connection, camera processing, gesture detection (with a live hold-progress bar), companion app (not needed).
-- **Hand seal** selector, **invisible duration** (0.5–10 s, default 2 s), **gesture sensitivity**.
+- **Hand seal** selector, **gesture sensitivity**.
+- **Reappear**: *When I make the seal again* (default) — you stay invisible until you release your hand and make the seal a second time (or press **Bring me back** in the popup; there is a 10-minute safety limit). *Automatically after a set time* — reappear after 0.5–10 s.
 - **Preview**: plays the real effect code on a drawn scene inside the popup.
 - **Test teleportation in Meet**: fires the jutsu in the call without a gesture.
 
@@ -104,7 +105,7 @@ Per-hand options: `fingers` (`'extended'` / `'curled'`), `together` (finger pair
 |---|---|---|
 | Activation | 0.45 s | Ignition flash, blue aura in the shape of your body, energy particles spiral inward, lightning arcs. |
 | Dissolve | 0.75 s | The body breaks apart cell by cell (feet first). Each vanishing cell ejects a fragment carrying the body's colour that swirls upward; a warp ripples through the picture; flash + shockwave. |
-| Invisible | **configurable, 2 s default** | Output is the empty-room plate with a fading afterglow and a few drifting sparks. The real camera keeps running underneath. |
+| Invisible | **until you make the seal again** (or a set time, 2 s default) | Output is the empty-room plate with a fading afterglow and a few drifting sparks. The real camera keeps running underneath. |
 | Reappear | 0.75 s | Particles converge on your silhouette (tracking your *current* pose) and each cell snaps back to live video as they land; flash + shockwave. |
 | Settle | 0.3 s | Aura fades; frames are passed through untouched again. |
 

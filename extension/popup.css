@@ -215,8 +215,12 @@ section {
   letter-spacing: 0.08em;
 }
 
-.controls label:first-child {
+.controls > label:first-child {
   margin-top: 0;
+}
+
+#holdRow[hidden] {
+  display: none;
 }
 
 .controls output {

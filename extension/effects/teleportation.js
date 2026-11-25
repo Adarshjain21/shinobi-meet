@@ -105,6 +105,23 @@
       this.particles.clear();
     }
 
+    /** True while fully invisible (between the dissolve and the reappearance). */
+    get holding() {
+      return this.active && this._phase === 'hold';
+    }
+
+    /**
+     * End the invisible phase now and start the reappearance, regardless of
+     * the hold time given to start(). Used when the user returns by gesture.
+     */
+    release(now) {
+      if (!this.active) return;
+      const holdStart = PHASE_MS.activate + PHASE_MS.dissolve;
+      const elapsed = now - this._startTime;
+      if (elapsed >= holdStart + this._holdMs) return; // already reappearing
+      this._holdMs = Math.max(0, elapsed - holdStart);
+    }
+
     /** Tell the effect that the mask canvas passed to start() has new content. */
     maskUpdated(mask, maskAlpha = null, colors = null) {
       if (mask) this._mask = mask;

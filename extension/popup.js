@@ -16,6 +16,8 @@ let targetTabId = null;
 
 function renderSettings() {
   $('enabled').checked = settings.enabled;
+  $('returnMode').value = settings.returnMode;
+  $('holdRow').hidden = settings.returnMode !== 'timer';
   $('hold').value = settings.holdSeconds;
   $('holdOut').textContent = Number(settings.holdSeconds).toFixed(1);
   $('sensitivity').value = settings.sensitivity;
@@ -38,6 +40,7 @@ function initControls() {
   }
   $('enabled').addEventListener('change', (e) => update({ enabled: e.target.checked }));
   $('sign').addEventListener('change', (e) => update({ sign: e.target.value }));
+  $('returnMode').addEventListener('change', (e) => update({ returnMode: e.target.value }));
   $('sensitivity').addEventListener('change', (e) => update({ sensitivity: e.target.value }));
   $('hold').addEventListener('input', (e) => {
     $('holdOut').textContent = Number(e.target.value).toFixed(1);
@@ -84,6 +87,7 @@ async function refreshStatus() {
   let hint = '';
   let canTest = false;
   let progress = 0;
+  let testLabel = '⚡ Test teleportation in Meet';
   targetTabId = null;
 
   if (!best) {
@@ -112,7 +116,13 @@ async function refreshStatus() {
     } else {
       canTest = true;
       const fallback = status.mode !== 'insertable-streams';
-      setRow('Camera', 'ok', status.effectActive ? 'Teleporting…' : 'Active · visible to everyone');
+      if (status.awaitingReturn) {
+        setRow('Camera', 'warn', 'Invisible');
+        hint = 'You are hidden. Release your hand, then make the seal again to come back.';
+        testLabel = '↩ Bring me back';
+      } else {
+        setRow('Camera', 'ok', status.effectActive ? 'Teleporting…' : 'Active · visible to everyone');
+      }
       if (fallback) hint = 'Compatibility mode: keep the Meet tab visible while teleporting.';
 
       const gesture = status.gesture || {};
@@ -139,6 +149,7 @@ async function refreshStatus() {
   $('holdMeter').style.width = `${Math.round(progress * 100)}%`;
   $('hint').textContent = hint;
   $('testBtn').disabled = !canTest;
+  $('testBtn').textContent = testLabel;
 }
 
 async function testInMeet() {
@@ -146,7 +157,7 @@ async function testInMeet() {
   if (targetTabId == null) return;
   try {
     const reply = await chrome.tabs.sendMessage(targetTabId, { type: 'test-trigger' });
-    if (reply?.ok && reply.started) message.textContent = 'Jutsu fired — check your Meet self-view.';
+    if (reply?.ok && reply.started) message.textContent = 'Done — check your Meet self-view.';
     else message.textContent = reply?.error || 'No active camera stream to teleport.';
   } catch (_) {
     message.textContent = 'Could not reach the Meet tab. Reload it.';

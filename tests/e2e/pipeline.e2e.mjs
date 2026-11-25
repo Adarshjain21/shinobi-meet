@@ -147,6 +147,10 @@ try {
   page.on('console', (m) => {
     if (m.type() === 'error' || m.type() === 'warning') console.log(`   [page ${m.type()}] ${m.text()}`);
   });
+  // The timing checks below use 'timer' return mode; 'gesture' mode is tested further down.
+  const worker = await browser.waitForTarget((t) => t.type() === 'service_worker' && t.url().includes('background.js'), { timeout: 10000 });
+  const sw = await worker.worker();
+  await sw.evaluate(() => chrome.storage.sync.set({ returnMode: 'timer', holdSeconds: 2, enabled: true }));
   await page.goto(origin);
 
   // ---------------------------------------------------------- camera hook
@@ -311,6 +315,27 @@ try {
     }
   }
 
+  // ------------------------------------------- return by gesture ('gesture' mode)
+  await sw.evaluate(() => chrome.storage.sync.set({ returnMode: 'gesture' }));
+  await sleep(800);
+  const fire = () => page.evaluate(() => window.postMessage({ __shinobiMeet: 'to-page', type: 'test-trigger' }, location.origin));
+  await fire();
+  await sleep(7000); // far longer than the 2 s timer
+  const waiting = await page.evaluate(() => window.lastStatus);
+  check('Gesture mode: stays invisible until asked to return', waiting.effectActive && waiting.awaitingReturn, JSON.stringify({ active: waiting.effectActive, awaiting: waiting.awaitingReturn }));
+  const frozen1 = await page.evaluate(() => window.grab('remote'));
+  await sleep(600);
+  const frozen2 = await page.evaluate(() => window.grab('remote'));
+  check('Gesture mode: remote still sees the empty-room plate after 7 s', motion(frozen1, frozen2) < liveMotion * 0.5, `motion ${motion(frozen1, frozen2).toFixed(2)}`);
+  await fire(); // same path the hand seal takes: StreamManager.trigger() → bring back
+  await sleep(2200);
+  const returned = await page.evaluate(() => window.lastStatus);
+  check('Gesture mode: second trigger brings the user back', !returned.effectActive && !returned.awaitingReturn);
+  const back1 = await page.evaluate(() => window.grab('remote'));
+  await sleep(600);
+  const back2 = await page.evaluate(() => window.grab('remote'));
+  check('Gesture mode: live video is back', motion(back1, back2) > 15, `motion ${motion(back1, back2).toFixed(2)}`);
+
   // ------------------------------------------------- stop / clone semantics
   const lifecycle = await page.evaluate(async () => {
     const manager = globalThis.__shinobiMeet.manager;
@@ -328,8 +353,6 @@ try {
   check('Camera is released when the page stops the last copy', lifecycle.afterAllStopped.pipelines === 0 && lifecycle.afterAllStopped.camera === 'ended');
 
   // ---------------------------------------------------- disabled = untouched
-  const worker = await browser.waitForTarget((t) => t.type() === 'service_worker' && t.url().includes('background.js'), { timeout: 10000 });
-  const sw = await worker.worker();
   await sw.evaluate(() => chrome.storage.sync.set({ enabled: false }));
   await sleep(500);
   const disabledKind = await page.evaluate(async () => {
