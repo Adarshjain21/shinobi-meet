@@ -122,6 +122,11 @@
       this._holdMs = Math.max(0, elapsed - holdStart);
     }
 
+    /** Swap in a better background plate while the effect is running. */
+    setPlate(plate) {
+      if (plate) this._plate = plate;
+    }
+
     /** Tell the effect that the mask canvas passed to start() has new content. */
     maskUpdated(mask, maskAlpha = null, colors = null) {
       if (mask) this._mask = mask;

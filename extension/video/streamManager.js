@@ -57,6 +57,9 @@
       this._plateSourceCtx = this._plateSource.getContext('2d');
       this._plateSourcePending = false;
       this._plate = new NS.BackgroundPlate();
+      this._shownPlate = null; // plate snapshot the running effect is displaying
+      this._sparePlate = null; // previous snapshot, reused for the next one
+      this._lastHiddenLearnAt = 0;
       this._mask = makeCanvas(2, 2);
       this._maskCtx = this._mask.getContext('2d');
       this._maskAlpha = null; // { data, width, height } — same mask as plain bytes
@@ -111,6 +114,27 @@
       if (this.settings.returnMode !== 'gesture') return false;
       for (const p of this.pipelines) if (p.effect.holding) return true;
       return false;
+    }
+
+    /** Fully invisible right now (either return mode). */
+    get _holding() {
+      for (const p of this.pipelines) if (p.effect.holding) return true;
+      return false;
+    }
+
+    /**
+     * Fill never-seen parts of the background plate from the current frame and
+     * hand the improved picture to the running effect. Known background is
+     * left untouched, so the output stays frozen apart from the patch healing.
+     */
+    _learnWhileHidden() {
+      this._plate.update(this._plateSource, this._maskAlpha, { fillOnly: true });
+      // Draw into the spare canvas, never the one the effect is showing.
+      const next = this._plate.snapshot(this._sparePlate);
+      if (!next) return;
+      this._sparePlate = this._shownPlate;
+      this._shownPlate = next;
+      for (const p of this.pipelines) if (p.effect.holding) p.effect.setPlate(next);
     }
 
     _bringBack(now) {
@@ -183,11 +207,12 @@
         for (let i = 0; i < colors.data.length; i++) colors.data[i] = (i * 37) % 256;
         // Build the plate the same way a real teleport does (cut-out + inpaint
         // pyramid), so those draw calls are warmed up as well.
-        const cutout = makeCanvas(64, 36);
-        const cutoutCtx = cutout.getContext('2d');
-        cutoutCtx.beginPath();
-        cutoutCtx.ellipse(32, 22, 12, 14, 0, 0, Math.PI * 2);
-        cutoutCtx.fill();
+        const cutout = { data: new Uint8Array(64 * 36), width: 64, height: 36 };
+        for (let y = 0; y < 36; y++) {
+          for (let x = 0; x < 64; x++) {
+            if (((x - 32) / 12) ** 2 + ((y - 22) / 14) ** 2 <= 1) cutout.data[y * 64 + x] = 255;
+          }
+        }
         const warmPlate = new NS.BackgroundPlate();
         warmPlate.update(still, cutout);
         effect.start({ now: 0, holdMs: HOLD_MS, plate: warmPlate.snapshot() || still, mask: null, colors });
@@ -224,7 +249,11 @@
       // Keep the exact frame the mask will describe, to update the plate with
       // it when the mask comes back (mask and pixels must match).
       this._plateSourcePending = false;
-      if (wantMask && !effectActive) {
+      // While invisible, keep learning (~1/s): if the user shifts aside, the
+      // wall they were covering replaces the guessed patch.
+      const learnHidden = effectActive && this._holding && now - this._lastHiddenLearnAt >= IDLE_MASK_INTERVAL_MS;
+      if (learnHidden) this._lastHiddenLearnAt = now;
+      if (wantMask && (!effectActive || learnHidden)) {
         const scale = Math.min(1, PLATE_MAX_WIDTH / width);
         resizeCanvas(this._plateSource, width * scale, height * scale);
         this._plateSourceCtx.drawImage(source, 0, 0, this._plateSource.width, this._plateSource.height);
@@ -318,8 +347,9 @@
           for (const p of this.pipelines) {
             if (p.effect.active) p.effect.maskUpdated(this._mask, this._maskAlpha, this._bodyColors);
           }
+          if (this._plateSourcePending && this._holding) this._learnWhileHidden();
         } else if (this._plateSourcePending) {
-          this._plate.update(this._plateSource, this._mask);
+          this._plate.update(this._plateSource, this._maskAlpha);
         }
         this._plateSourcePending = false;
 
@@ -360,6 +390,9 @@
       this._lastTriggerAt = Date.now();
       this._gesture = { hands: 0, matched: false, progress: 0 };
       const plate = this._plate.snapshot();
+      this._shownPlate = plate;
+      this._sparePlate = null;
+      this._lastHiddenLearnAt = now;
       for (const pipeline of this.pipelines) {
         pipeline.effect.start({
           now,

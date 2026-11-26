@@ -192,7 +192,7 @@ Please do a quick solo test call (meet.google.com → *New meeting* → *Start a
 | **Waiting for camera** although the camera is on | The camera was started before the extension attached. Toggle the camera off/on in Meet or reload the tab. |
 | Seal is not recognised | Watch the popup: “1 hand in view” means tracking works but the pose doesn't match. Keep the two fingers touching and pointing up, fold ring + pinky fully, palm side or back toward the camera, hand not too close. Try **High** sensitivity. |
 | Triggers by accident | Use **Low** sensitivity, or switch to the two-hand Clone Seal. |
-| The “empty room” has a soft blurry patch where you were | The plate can only show background it has seen. It learns continuously - lean out of frame once and it fills in for real. |
+| The “empty room” has a soft blurry patch where you were | The plate can only show background it has seen. It learns continuously, also while you are invisible - lean out of frame once and it fills in for real. |
 | Gesture detection **Unavailable** | MediaPipe failed to start (see the tab's console). The test button still works, using a generic silhouette. |
 | Meet's own background blur/effects | Meet applies them to whatever camera track it receives, so they should stack on top of the jutsu - not tested yet. |
 
