@@ -577,9 +577,11 @@
         this.energy.drawAura(glow, this._mask, width, height, 1.6 * clamp01(1 - progress * 1.15) * flicker);
       } else if (phase === 'hold') {
         const sinceVanish = elapsed - tHold;
+        // Brief afterglow only; once it fades the room is left completely clean.
         const afterglow = 0.4 * clamp01(1 - sinceVanish / 600);
-        const shimmer = 0.07 * (0.6 + 0.4 * Math.sin(now / 180));
-        this.energy.drawAura(glow, this._ghostMask, width, height, afterglow + shimmer, 'rgb(30,110,255)', 7);
+        if (afterglow > 0) {
+          this.energy.drawAura(glow, this._ghostMask, width, height, afterglow, 'rgb(30,110,255)', 7);
+        }
       } else if (phase === 'reappear') {
         this.energy.drawAura(glow, this._mask, width, height, 1.3 * easeOut(progress) * flicker);
       } else {
@@ -594,7 +596,6 @@
 
       // ---- 6. particles
       if (phase === 'activate') this._emitGather(dt);
-      else if (phase === 'hold') this._emitResidual(dt);
       particles.update(dt);
       particles.render(ctx, glow);
 
